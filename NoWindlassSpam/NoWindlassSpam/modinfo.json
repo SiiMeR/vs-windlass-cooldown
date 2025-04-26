@@ -1,0 +1,17 @@
+{
+  "type": "code",
+  "modid": "nocrossbowspam",
+  "name": "NoCrossbowSpam",
+  "authors": [
+    "SiiMeR"
+  ],
+  "description": "Adds a cooldown after shooting a crossbow to prevent spam.",
+  "version": "1.0.0",
+  "dependencies": {
+    "game": "",
+    "overhaullib": "",
+    "maltiezcrossbows": ""
+  },
+  "requiredOnClient": true,
+  "requiredOnServer": true
+}
