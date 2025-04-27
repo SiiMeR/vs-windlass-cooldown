@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using CombatOverhaul.Inputs;
 using CombatOverhaul.RangedSystems;
 using Crossbows;
@@ -24,6 +25,12 @@ public static class CrossbowShootPatch
         bool mainHand,
         AttackDirection direction)
     {
+        if (!NoWindlassSpamModSystem.Config.ApplicableCrossbowIds.Contains(slot.Itemstack.Collectible.Code.ToString()))
+        {
+            return true;
+        }
+
+
         var cooldown = player.WatchedAttributes.GetLong("crossbowcooldown");
         var nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (cooldown == 0L || nowSeconds > cooldown)
