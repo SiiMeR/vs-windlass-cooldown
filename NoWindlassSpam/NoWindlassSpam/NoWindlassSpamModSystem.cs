@@ -19,6 +19,7 @@ public class NoWindlassSpamModSystem : ModSystem
 
     public override void StartClientSide(ICoreClientAPI api)
     {
+        Config = new CrossbowsSpamConfig();
         (_networkChannel as IClientNetworkChannel).SetMessageHandler<ConfigPacket>(OnConfigPacketReceived);
 
         var harmony = new Harmony(Mod.Info.ModID);
