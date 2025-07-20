@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using CombatOverhaul.Inputs;
 using CombatOverhaul.RangedSystems;
 using Crossbows;
@@ -30,16 +29,14 @@ public static class CrossbowShootPatch
             return true;
         }
 
-
-        var cooldown = player.WatchedAttributes.GetLong("crossbowcooldown");
-        var nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        if (cooldown == 0L || nowSeconds > cooldown)
+        var cooldown = NoWindlassSpamModSystem.CrossbowCooldownLeftMs;
+        if (cooldown <= 0)
         {
             return true;
         }
 
         (player.Api as ICoreClientAPI).TriggerIngameError(__instance, "crossbowOnCooldown",
-            $"Cannot shoot for another {cooldown - nowSeconds:0} second(s)");
+            $"Cannot shoot for another {cooldown / 1000:0} second(s)");
 
         __result = false;
         return false;
@@ -54,8 +51,7 @@ public static class CrossbowShootPatch
     {
         if (__result)
         {
-            var nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            player.Entity.WatchedAttributes.SetLong("crossbowcooldown", nowSeconds + 12);
+            NoWindlassSpamModSystem.ServerNetworkChannel.SendPacket(new CrossbowCooldownPacket(), player);
         }
     }
 }

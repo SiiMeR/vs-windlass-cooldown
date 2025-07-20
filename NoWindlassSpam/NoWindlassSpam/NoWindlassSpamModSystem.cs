@@ -10,17 +10,25 @@ namespace NoWindlassSpam;
 public class NoWindlassSpamModSystem : ModSystem
 {
     public static CrossbowsSpamConfig Config;
+
+    public static double CrossbowCooldownLeftMs;
+    public static IServerNetworkChannel ServerNetworkChannel;
+
+    private ICoreClientAPI _clientApi;
     private INetworkChannel _networkChannel;
 
     public override void Start(ICoreAPI api)
     {
-        _networkChannel = api.Network.RegisterChannel(Mod.Info.ModID).RegisterMessageType<ConfigPacket>();
+        _networkChannel = api.Network.RegisterChannel(Mod.Info.ModID).RegisterMessageType<ConfigPacket>()
+            .RegisterMessageType<CrossbowCooldownPacket>();
     }
 
     public override void StartClientSide(ICoreClientAPI api)
     {
         Config = new CrossbowsSpamConfig();
-        (_networkChannel as IClientNetworkChannel).SetMessageHandler<ConfigPacket>(OnConfigPacketReceived);
+        _clientApi = api;
+        (_networkChannel as IClientNetworkChannel).SetMessageHandler<ConfigPacket>(OnConfigPacketReceived)
+            .SetMessageHandler<CrossbowCooldownPacket>(OnCrossbowCooldownPacketReceived);
 
         var harmony = new Harmony(Mod.Info.ModID);
 
@@ -29,6 +37,27 @@ public class NoWindlassSpamModSystem : ModSystem
         var patch = AccessTools.Method(typeof(CrossbowShootPatch), nameof(CrossbowShootPatch.ShootClient));
 
         harmony.Patch(original, new HarmonyMethod(patch));
+    }
+
+    private void OnCrossbowCooldownPacketReceived(CrossbowCooldownPacket packet)
+    {
+        CrossbowCooldownLeftMs = 12000;
+
+        StartCooldownTimer();
+    }
+
+    private void StartCooldownTimer()
+    {
+        if (CrossbowCooldownLeftMs <= 0)
+        {
+            return;
+        }
+
+        _clientApi.Event.RegisterCallback(_ =>
+        {
+            CrossbowCooldownLeftMs -= 250;
+            StartCooldownTimer();
+        }, 250);
     }
 
     private void OnConfigPacketReceived(ConfigPacket packet)
@@ -40,9 +69,10 @@ public class NoWindlassSpamModSystem : ModSystem
     {
         TryToLoadConfig(api);
 
+        ServerNetworkChannel = api.Network.GetChannel(Mod.Info.ModID);
         api.Event.PlayerNowPlaying += player =>
         {
-            (_networkChannel as IServerNetworkChannel).SendPacket(new ConfigPacket
+            ServerNetworkChannel.SendPacket(new ConfigPacket
                 { ApplicableCrossbowIds = Config.ApplicableCrossbowIds }, player);
         };
 
